@@ -22,8 +22,17 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
+    vals_ = []
+    for i in range(len(vals)):
+        if i == arg:
+            vals_.append(vals[i] + epsilon)
+        else:
+            vals_.append(vals[i])
+            
+    print(vals)
+    print(tuple(vals_))
+            
+    return (f(*vals_) - f(*vals))/epsilon
 
 
 variable_count = 1
@@ -61,8 +70,20 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    
+    res = []
+    visited = set()
+
+    def visit(var):
+        if not var.is_leaf():
+            for input in var.history.inputs:
+                if (not input.is_constant()) and (not input.unique_id in visited):
+                    visit(input)
+        visited.add(var.unique_id)
+        res.append(var)
+
+    visit(variable)
+    return res[::-1]
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +97,22 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    
+    top_sort = topological_sort(variable)
+
+    grads = {}
+    grads[variable.unique_id] = deriv
+    for var in top_sort:
+        if var.unique_id not in grads:
+            grads[var.unique_id] = 0
+        d = grads[var.unique_id]
+        if var.is_leaf():
+            var.accumulate_derivative(d)
+        else:
+            for neig, grad in var.chain_rule(d):
+                if neig.unique_id not in grads:
+                    grads[neig.unique_id] = 0
+                grads[neig.unique_id] += grad
 
 
 @dataclass
